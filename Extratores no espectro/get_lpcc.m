@@ -5,7 +5,7 @@
 
 % Baseado no algoritmo de Levinson–Durbin.
 
-function coefs = lpc_coefs(x,P,Fs)
+function coefs = get_lpcc(x,P,Fs)
 
 r = zeros(1,P+1); % Autocorrelação
 r(1) = sum(x.^2); % Energia do sinal
