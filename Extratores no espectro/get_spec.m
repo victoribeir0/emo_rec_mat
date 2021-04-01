@@ -4,7 +4,7 @@
 % Tjan = Duração de cada janela (em ms).
 % Tav = Tempo de avanço (em ms).
 
-function [S, L] = mat_fft(x, Fs, Tjan, Tav, plot_img, rnn)
+function [S, L] = get_spec(x, Fs, Tjan, Tav, plot_img, rnn)
 
 % L = Comprimento de cada janela (am amostras).
 L = round((Tjan/1000)*Fs);
