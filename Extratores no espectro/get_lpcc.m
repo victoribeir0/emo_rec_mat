@@ -5,8 +5,9 @@
 
 % Baseado no algoritmo de Levinson–Durbin.
 
-function coefs = get_lpcc(x,P,Fs)
+function [coefs,H,F] = get_lpcc(x,P,Fs,plot_img)
 
+P = P-1;
 r = zeros(1,P+1); % Autocorrelação
 r(1) = sum(x.^2); % Energia do sinal
 
@@ -43,21 +44,26 @@ for p = 2:P+1
 end
 
 coefs = [1 -a(end,2:end)]; % Obtenção dos coeficientes.
-
-% Tranformada de Fourier do sinal.
-fft_x = fft2(x,Fs);
-
-escalahz = Fs*(0:length(x)/2)/length(x); % Escala em Hz.
-
 % Resposta em frequência dos coeficientes.
-[H,F] = freqz(1,coefs,length(fft_x),16000);
+% Os coefs são do modelo de produção de voz (all-pole, iir).
+[H,F] = freqz(1,coefs,length(x)/2,Fs);
 
-subplot(211); % Plota o sinal de entrada.
-plot(x,'r'); grid on; title('x');
-
-subplot(212); % Plota o espectro do sinal de entrada e o espectro LPC.
-plot(escalahz,log(fft_x)-mean(log(fft_x)),'r'); hold on; plot(F,log(abs(H)),'b'); grid on; title('FFT x e LPC x');
-
+if plot_img
+    % Tranformada de Fourier do sinal.
+    fft_x = fft2(x,Fs);
+    
+    escalahz = Fs*(0:length(x)/2)/length(x); % Escala em Hz.
+    
+    % Resposta em frequência dos coeficientes.
+    % Os coefs são do modelo de produção de voz (all-pole, iir).
+    [H,F] = freqz(1,coefs,length(fft_x),Fs);
+    
+    subplot(211); % Plota o sinal de entrada.
+    plot(x,'r'); grid on; title('x');
+    
+    subplot(212); % Plota o espectro do sinal de entrada e o espectro LPC.
+    plot(escalahz(1:end-1),log(fft_x)-mean(log(fft_x)),'r'); hold on; plot(F,log(abs(H)),'b'); grid on; title('FFT x e LPC x');
+end
 end
 
 function r = auto_lpc(x,k)
