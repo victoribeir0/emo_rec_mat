@@ -11,16 +11,14 @@
     amp_x = Amplitudes dos períodos para todo o sinal.
 %}
 
-function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, amp_x] = get_quali(x, Tjan, inds, Fs, mean_F0)
+function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, amp_x, mean_dif_picos] = get_quali(x, Tjan, inds, Fs, mean_F0)
 
 Njan = round((Tjan/1000)*Fs);      % Num. de amostras em cada janela.
 NAv  = round((10/1000)*Fs);        % Num. de amostras para o avanço (sobreposição).
                        
-jit_abs  = zeros(1,length(inds));  % Inicialização dos vetores.
-jit_rel  = zeros(1,length(inds));  
-shim_abs = zeros(1,length(inds)); 
-shim_rel = zeros(1,length(inds)); 
-amp_std  = zeros(1,length(inds));
+jit_abs  = zeros(1,length(inds)); jit_rel  = zeros(1,length(inds));  
+shim_abs = zeros(1,length(inds)); shim_rel = zeros(1,length(inds)); 
+amp_std  = zeros(1,length(inds)); mean_dif_picos = zeros(1,length(inds));
 amp_x    = [];
 T0       = [];   
 
@@ -39,8 +37,7 @@ for i = 1:length(inds)  % Laço for para cada janela específica.
     [jit_abs(i), jit_rel(i), T0_prev, amp_max, idx_T0, loc_max] = get_jitter(filt, mx, Fs, mean_F0);
     T0 = [T0 T0_prev]; % Guarda todos os períodos do sinal x.
         
-    [shim_abs(i), shim_rel(i), amp_x_prev, amp_std(i)] = get_shimmer(filt, idx_T0, loc_max, amp_max, mean_F0, Fs);
-    % amp_std = [amp_std amp_std_prev];  % Desvio pad. das amp. pico a pico da janela.
+    [shim_abs(i), shim_rel(i), amp_x_prev, amp_std(i), mean_dif_picos(i)] = get_shimmer(filt, idx_T0, loc_max, amp_max, mean_F0, Fs);
     amp_x = [amp_x amp_x_prev];        % Guarda as amp. pico a pico da janela.        
         
 end
@@ -62,6 +59,9 @@ amp_std = amp_std(idx_nan);
 
 idx_nan = ~isnan(amp_x);       % Remove os NaN, caso haja.
 amp_x = amp_x(idx_nan);
+
+idx_nan = ~isnan(mean_dif_picos);       % Remove os NaN, caso haja.
+mean_dif_picos = mean_dif_picos(idx_nan);
 
 % Calula o jitter para todos os T0 do sinal.
 jit_sinal = sum(abs(diff(T0)))/length(T0);
@@ -110,7 +110,7 @@ end
     amp_x = Amp. dos períodos de todas as janelas; 
     amp_std = Desv. pad. dos períodos dentro de uma janela.    
 %}
-function [shim_abs, shim_rel, amp_x, amp_std] = get_shimmer(x, idx, loc_max, amp_max, mean_F0, Fs)
+function [shim_abs, shim_rel, amp_prev, amp_std, mean_dif_picos] = get_shimmer(x, idx, loc_max, amp_max, mean_F0, Fs)
 
 if ~isempty(idx)
     
@@ -138,40 +138,47 @@ if ~isempty(idx)
     T0_med = round(Fs/mean_F0);       % Período médio, baseado no F0 médio.
     
     T = round(T0_med/2);
-    sinal_cut = zeros(length(loc_max),(round(T0_med/2)*2)+1);
-    % loc_min = zeros(1,length(loc_max));
+    % sinal_cut = zeros(1,(round(T0_med/2)*2)+1);
+    loc_min = zeros(1,length(loc_max));
     amp_min = zeros(1,length(loc_max));
     
     for n = 1:length(loc_max)
         ini = loc_max(n)-T; fim = loc_max(n)+T;
-        sinal_cut(n,:) = [x(ini:loc_max(n)-1)' x(loc_max(n):fim)'];
-        mx_rel = max(-sinal_cut(n,:))*0.5;
-        [amp_min_prev, ~] = findpeaks(-sinal_cut(n,:),'MinPeakHeight',mx_rel);
+        sinal_cut = [x(ini:loc_max(n)-1)' x(loc_max(n):fim)'];
+        mx_rel = max(-sinal_cut)*0.5;
+        [amp_min_prev, loc_min_prev] = findpeaks(-sinal_cut,'MinPeakHeight',mx_rel);
         
         if isempty(amp_min_prev)
             amp_min(n) = 0;
+            loc_min(n) = 0;
         else
             amp_min(n) = max(amp_min_prev);
+            loc_min(n) = max(loc_min_prev);
         end
         
-        %loc_min(n) = max(loc_min_prev);
-        %y(n) = re_scale(loc_min(n),(1:size(sinal_cut,2)),(ini:fim));
+        % loc_min_prev = max(loc_min_prev);
+        loc_min(n) = re_scale(loc_min(n),(1:size(sinal_cut,2)),(ini:fim));
     end
     
-    amp_prev = amp_max'+amp_min;
-    mdn = median(amp_prev);
-    amp_prev = amp_prev(amp_prev<mdn+mdn/3 & amp_prev>mdn-mdn/3);
-    amp_std = std(amp_prev);   % Desvio pad. das amp. pico a pico da janela.
-    amp_x = amp_prev;          % Guarda as amp. pico a pico de todo o sinal.
+    amp_prev = amp_max'+amp_min; % Amplitde pico a pico, max(x)-min(x).
+    mdn = median(amp_prev);      % Mediana para o critério de seleção.
+    amp_prev = amp_prev(amp_prev<mdn+mdn/3 & amp_prev>mdn-mdn/3); % Critério de seleção.
+    amp_std  = std(amp_prev);    % Desvio pad. das amp. pico a pico da janela.    
     
-    shim_abs = sum(abs(diff(amp_prev)))/length(amp_prev);
-    shim_rel = 100*(shim_abs/mean(amp_prev));
+    shim_abs = sum(abs(diff(amp_prev)))/length(amp_prev); % Shim. absoluto.
+    shim_rel = 100*(shim_abs/mean(amp_prev));             % Shim. relativo
+    
+    dif_picos = abs(loc_max-loc_min');
+    mdn = median(dif_picos);
+    dif_picos = dif_picos(dif_picos<mdn+mdn/2 & dif_picos>mdn-mdn/2);
+    mean_dif_picos = mean(dif_picos);
     
 else
     shim_abs = NaN;
     shim_rel = NaN;
-    amp_x    = NaN;
+    amp_prev = NaN;
     amp_std  = NaN;
+    mean_dif_picos = NaN;
 end
 
 end
