@@ -9,7 +9,7 @@
     Obs: O vetor de F0 é reduzido pela mediana, valores distantes são removidos.
 %}
 
-function [F0, usaveis] = get_f0_2(x, Tjan, inds, Fs)
+function [F0, usaveis] = get_f0(x, Tjan, inds, Fs)
 
 Njan = round((Tjan/1000)*Fs); % Num. de amostras em cada janela.
 NAv = round((10/1000)*Fs);    % Num. de amostras para o avanço (sobreposição).
