@@ -106,6 +106,12 @@ for emo = 1:length(emos)
     
 end
 
+res = res(1:ni-1,:);
+[l,c] = find(res == -Inf);
+res(l,c) = -500;
+pos = isnan(res);
+res(pos) = -500;
+
 % [far,frr] = teste_loc(res,0.1);
 end
 
