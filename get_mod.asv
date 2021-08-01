@@ -1,4 +1,4 @@
-function [centros_gaus,dx] = get_mod(n_quant,viz)
+function [centros_gaus] = get_mod(n_quant,viz,plot_img)
 %   triste - raiva - feliz - neutro
 
 folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2';
@@ -42,7 +42,7 @@ for k = 1:4
     vet_dx(1:n_quant+1:length(vet_dx)) = 255;  % ---
     [~,sortIndex] = sort(vet_dx(:));
     minD = sortIndex(1:N_cen);
-    vet_dx(minD) = 200;
+    vet_dx(minD) = 1;
     
     maxD = setdiff(sortIndex,minD);
     vet_dx(maxD) = 255;
@@ -59,16 +59,25 @@ end
 %     dxn(:,:,k) = m;
 % end
 
-l = zeros(N_cen,4);
-c = zeros(N_cen,4);
-centros_gaus = zeros(N_cen,2,4);
-
 for k = 1:4 % Obtém a posição dos centros.
-    [l(:,k),c(:,k)] = find(dx(:,:,k) == 200);
+    [l(:,k),c(:,k)] = find(dx(:,:,k) == 1);
 end
 
 for k = 1:4
-    centros_gaus(:,:,k) = [l(:,k) c(:,k)];
+    centros_gaus(:,:,k) = [l(:,k) c(:)];
+end
+
+if plot_img
+    subplot(221);
+    imagesc(dxn(:,:,1)); title('Triste'); % --
+    subplot(222);
+    imagesc(dxn(:,:,2)); title('Raiva'); % --
+    subplot(223);
+    imagesc(dxn(:,:,3)); title('Feliz'); % --
+    subplot(224);
+    imagesc(dxn(:,:,4)); title('Neutro'); % --
+    
+    disp(n_centros);
 end
 
 end

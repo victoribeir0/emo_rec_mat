@@ -72,12 +72,13 @@ for n = 1:N
         
         % Caso o extrator seja f0:
         if strcmp(ext, 'f0')
-            [~, f0, nrg, jit_abs, ~, jit_x, shi_abs, ~, amp_x, mean_dif_picos, ~] = get_global_contx(dados.data,idx,dados.fs);
+            [~, f0, nrg, jit_abs, ~, jit_x, shi_abs, ~, amp_x, mean_dif_picos, ~] = get_global_contx(dados.data,idx,dados.fs,3);
             [int_voz, ~] = get_times(nrg,1);
             
             % y = [sum(int_voz); mean(int_voz); f0; mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x)];
             y1 = [f0'; jit_abs; shi_abs; mean_dif_picos];
-            % [vet, ~] = get_com_feat(y1,3);
+            [vet, ~] = get_com_feat(y1,3);
+            y1 = [f0'; jit_abs; shi_abs; mean_dif_picos; vet];
             
             %if vet ~= 's'
             %    y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];

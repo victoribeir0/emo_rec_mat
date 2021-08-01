@@ -21,7 +21,6 @@ if strcmp(ext, 'mfcc')
     
 elseif strcmp(ext, 'f0')
     base = [];
-    vet_final = [];
     
 elseif strcmp(ext, 'lpcc')
     base = zeros(15,1);
@@ -77,10 +76,11 @@ for n = 1:N
             
             % y = [sum(int_voz); mean(int_voz); f0; mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x)];
             y1 = [f0'; jit_abs; shi_abs; mean_dif_picos];
-            % [vet, ~] = get_com_feat(y1,3);
+            [vet, ~] = get_com_feat(y1,3);
+            % y1 = [f0'; jit_abs; shi_abs; mean_dif_picos; vet];
             
             %if vet ~= 's'
-            %    y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];
+            y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];
             %else
             %    y = [];
             %end                        
@@ -116,7 +116,7 @@ for n = 1:N
         
         % Incrementa a base com as informações de cada sinal.
         % vet_final = [vet_final; vet];
-        base = [base y1];
+        base = [base y];
         
     end
 end
