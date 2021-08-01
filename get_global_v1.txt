@@ -1,0 +1,56 @@
+function [m_nrg, m_f0, nrg] = get_global(x,jans,fs)
+
+[~,~,nrg,coef,zcr] = vad_mix(x,40,10);
+
+if nargin < 2
+    [jans,~,nrg,coef,zcr] = vad_mix(x,40,10);
+end
+
+[k_0, u] = get_f0_2(x,40,jans,fs);
+[jitter_abs, jitter_rel, jitter_sinal] = get_jitter(x,40,u,fs,mean(k_0));
+
+m_nrg = mean(nrg);
+m_f0 = mean(k_0);
+
+% descartados = jans(~ismember(jans,usados));
+% f0 = zeros(1,length(descartados));
+
+%if ~isempty(k_0)
+%     for i = 1:length(descartados)
+%         [~,idx_nrg] = min(abs(nrg(descartados(i))-nrg(usados)));
+%         [~,idx_coef] = min(abs(coef(descartados(i))-coef(usados)));
+%         [~,idx_zcr] = min(abs(zcr(descartados(i))-zcr(usados)));
+%         
+%         a = idx_nrg(1);
+%         b = idx_coef(1);
+%         c = idx_zcr(1);
+%         
+%         if (a == b && a == c) || a == b || a == c
+%             f0(i) = k_0(a);
+%             
+%         elseif b == c
+%             f0(i) = k_0(b);
+%             
+%         else
+%             f0(i) = mean([k_0(a) k_0(b) k_0(c)]);
+%         end
+%     end
+    
+    % f0 = [k_0' f0];
+%end
+
+% f0_inc = get_ang(k_0');
+% nrg_inc = get_ang(nrg(jans));
+
+% nrg_std = std(nrg(jans));
+% f0_std = std(k_0);
+
+end
+
+function res = get_ang(y)
+x = 1:length(y);
+
+m = [ones(length(x),1) x'];
+a = inv(m'*m)*m'*y';
+res = a(2);
+end
