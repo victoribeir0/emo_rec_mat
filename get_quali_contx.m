@@ -11,18 +11,18 @@
     amp_x = Amplitudes dos períodos para todo o sinal.
 %}
 
-function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, mean_dif_picos, idx_nan] = get_quali_contx(x, Tjan, inds, Fs, mean_F0)
+function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, mean_dif_picos, idx_nan] = get_quali_contx(x, Tjan, inds, Fs, F0)
 
 Njan = round((Tjan/1000)*Fs);      % Num. de amostras em cada janela.
 NAv  = round((10/1000)*Fs);        % Num. de amostras para o avanço (sobreposição).
-                       
-jit_abs  = zeros(1,length(inds)); jit_rel  = zeros(1,length(inds));  
-shim_abs = zeros(1,length(inds)); shim_rel = zeros(1,length(inds)); 
-amp_std  = zeros(1,length(inds)); mean_dif_picos = zeros(1,length(inds));
-amp_x    = [];
-T0       = [];   
 
-for i = 1:length(inds)  % Laço for para cada janela específica.
+jit_abs  = zeros(1,length(inds)); jit_rel  = zeros(1,length(inds));
+shim_abs = zeros(1,length(inds)); shim_rel = zeros(1,length(inds));
+amp_std  = zeros(1,length(inds)); mean_dif_picos = zeros(1,length(inds));
+T0 = Fs./F0;
+t = 2;
+
+for i = 1:length(inds)-2  % Laço for para cada janela específica.
     
     aux = inds(i);  % Define a janela específica.
     ap = ((aux-1)*NAv)+1;
@@ -34,84 +34,42 @@ for i = 1:length(inds)  % Laço for para cada janela específica.
     filt = conv(a,h);          % Sinal filtrado.
     h = fir1(200, (100*2)/Fs, 'high');
     filt = conv(filt,h);
-    mn = min(filt)*0.5; mx = max(filt)*0.5;  % Limites para detecção dos picos.   
+    mn = min(filt)*0.5; mx = max(filt)*0.5;  % Limites para detecção dos picos.
     
-    [jit_abs(i), jit_rel(i), T0_prev, amp_max, idx_T0, loc_max] = get_jitter(filt, mx, Fs, mean_F0);
-    % [jit_abs(i), jit_rel(i), T0_prev, amp_max, idx_T0, loc_max] = get_jitter(filt, mx, Fs, mean_F0);
-    T0 = [T0 T0_prev]; % Guarda todos os períodos do sinal x.
-        
-    [shim_abs(i), shim_rel(i), amp_x_prev, amp_std(i), mean_dif_picos(i)] = get_shimmer(filt, idx_T0, loc_max, amp_max, mean_F0, Fs);
-    amp_x = [amp_x amp_x_prev];        % Guarda as amp. pico a pico da janela.        
-        
+    jit_abs(i) = sum(abs(diff(T0(i:i+t))))/length(T0(i:i+t));
+    jit_rel(i) = 100*(jit_abs(i)/mean(T0(i:i+t)));
+    
+    [shim_abs(i), shim_rel(i), ~, amp_std(i), mean_dif_picos(i)] = get_shimmer(filt, mean(F0), Fs, mx);
+    
 end
 
-% idx_nan_1 = ~isnan(jit_abs);     % Remove os NaN, caso haja.
-% idx_nan_2 = ~isnan(jit_rel);     % Remove os NaN, caso haja.
-% idx_nan_3 = ~isnan(shim_rel);    % Remove os NaN, caso haja.
-% idx_nan_4 = ~isnan(shim_abs);    % Remove os NaN, caso haja.
-% idx_nan_5 = ~isnan(amp_std);     % Remove os NaN, caso haja.
-% idx_nan_6 = ~isnan(amp_x);       % Remove os NaN, caso haja.
-% idx_nan_7 = ~isnan(mean_dif_picos);       % Remove os NaN, caso haja.
+jit_abs(end-(t-1):end) = jit_abs(end-(t-1)-2:end-(t-1)-1);
+jit_rel(end-(t-1):end) = jit_rel(end-(t-1)-2:end-(t-1)-1);
 
-idx_nan = find(~isnan(jit_abs) == 1 & ~isnan(jit_rel) == 1 & ~isnan(shim_rel) == 1 & ~isnan(shim_abs) == 1 & ...
-               ~isnan(amp_std) == 1 & ~isnan(mean_dif_picos) == 1);
-
-jit_abs = jit_abs(idx_nan);
-jit_rel = jit_rel(idx_nan);
-shim_rel = shim_rel(idx_nan);
-shim_abs = shim_abs(idx_nan);
-amp_std = amp_std(idx_nan);
-% amp_x = amp_x(idx_nan);
-mean_dif_picos = mean_dif_picos(idx_nan);
+shim_abs(end-(t-1):end) = shim_abs(end-(t-1)-2:end-(t-1)-1);
+shim_rel(end-(t-1):end) = shim_rel(end-(t-1)-2:end-(t-1)-1);
+amp_std(end-(t-1):end) = amp_std(end-(t-1)-2:end-(t-1)-1);
+mean_dif_picos(end-(t-1):end) = mean_dif_picos(end-(t-1)-2:end-(t-1)-1);
 
 % Calula o jitter para todos os T0 do sinal.
 jit_sinal = sum(abs(diff(T0)))/length(T0);
 
 end
 
-%{ 
-    Função para determinar o Jitter. 
-    x = Janela de voz;                        |  mean_F0 = Média do F0;
-    mx = Limite mínimo para o pico;           |  Fs = Freq. Amostragem;  
-    
-    jit_abs = Shim. absoluto;                 |  jit_rel = Shim. relativo.
-    T0 = Períodos obtidos na janela;          |  amp_max = Amp. dos picos; 
-    idx_T0 = Índices lógicos para o períodos  |  loc_max = Loc. dos picos.
-    
-%}
-function [jit_abs, jit_rel, T0, amp_max, idx_T0, loc_max] = get_jitter(x, mx, Fs, mean_F0)
-    
-    T0 = [];
-    [amp_max, loc_max] = findpeaks(x,'MinPeakHeight',mx);   % Obtém as posições dos picos.
-    T0_prev = diff(loc_max);                                % Obtém as diferenças, período previsto.
-    
-    % Critério para seleção baseado na média do F0 obtido.
-    idx_T0 = (T0_prev<(Fs/mean_F0)+30 & T0_prev>(Fs/mean_F0)-30);
-    T0_prev = T0_prev(idx_T0);           
-    
-    F0_prev = Fs./T0_prev;
-    
-    % Critério para seleção baseado na média do F0 obtido.
-    idx_F0 = (F0_prev<mean_F0+30 & F0_prev>mean_F0-30);
-    T0_prev = T0_prev(idx_F0);
-    
-    jit_abs = sum(abs(diff(T0_prev)))/length(T0_prev); % Jitter absoluto.
-    jit_rel = 100*(jit_abs/mean(T0_prev));             % Jitter relativo.
-    
-    T0 = [T0 T0_prev']; % Guarda todos os períodos do sinal x.
-end
-
-%{ 
-    Função para determinar o Shimmer. 
+%{
+    Função para determinar o Shimmer.
     idx = Vator lógico dos períodos;     |    loc_max = Loc. dos valores máximos.
     amp_max = Amp. dos valores máximos;  |    mean_F0 = Média do F0;
     Fs = Freq. Amostragem;               |    filt = Sinal fitrado.
     
     shim_abs = Shim. absoluto;           |    shim_rel = Shim. relativo.
-    amp_x = Amp. dos períodos de todas as janelas; 
-    amp_std = Desv. pad. dos períodos dentro de uma janela.    
+    amp_x = Amp. dos períodos de todas as janelas;
+    amp_std = Desv. pad. dos períodos dentro de uma janela.
 %}
-function [shim_abs, shim_rel, amp_prev, amp_std, mean_dif_picos] = get_shimmer(x, idx, loc_max, amp_max, mean_F0, Fs)
+function [shim_abs, shim_rel, amp_prev, amp_std, mean_dif_picos] = get_shimmer(x, mean_F0, Fs, mx)
+
+[amp_max, loc_max] = findpeaks(x,'MinPeakHeight',mx);
+idx = ones(length(amp_max),1);
 
 if ~isempty(idx)
     
@@ -126,15 +84,15 @@ if ~isempty(idx)
             loc(n) = idxn(n);
         else
             
-        % Caso n ~= de 1, testa se há valor lógico 1 no idxn(n) ou no idxn(n+1)
+            % Caso n ~= de 1, testa se há valor lógico 1 no idxn(n) ou no idxn(n+1)
             if idxn(n) == 1 || idxn(n+1) == 1
                 loc(n) = 1;
             end
         end
     end
-        
-    loc_max = loc_max(logical(loc')); % Atualiza as loc. dos máximos.
-    amp_max = amp_max(logical(loc')); % Atualiza as amp. dos máximos.
+    
+    %loc_max = loc_max(logical(loc')); % Atualiza as loc. dos máximos.
+    %amp_max = amp_max(logical(loc')); % Atualiza as amp. dos máximos.
     
     T0_med = round(Fs/mean_F0);       % Período médio, baseado no F0 médio.
     
@@ -164,7 +122,7 @@ if ~isempty(idx)
     amp_prev = amp_max'+amp_min; % Amplitde pico a pico, max(x)-min(x).
     mdn = median(amp_prev);      % Mediana para o critério de seleção.
     amp_prev = amp_prev(amp_prev<mdn+mdn/3 & amp_prev>mdn-mdn/3); % Critério de seleção.
-    amp_std  = std(amp_prev);    % Desvio pad. das amp. pico a pico da janela.    
+    amp_std  = std(amp_prev);    % Desvio pad. das amp. pico a pico da janela.
     
     shim_abs = sum(abs(diff(amp_prev)))/length(amp_prev); % Shim. absoluto.
     shim_rel = 100*(shim_abs/mean(amp_prev));             % Shim. relativo

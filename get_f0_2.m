@@ -9,7 +9,7 @@
     Obs: O vetor de F0 é reduzido pela mediana, valores distantes são removidos.
 %}
 
-function [F0, usaveis, hnr] = get_f0_2(x, Tjan, inds, Fs)
+function [F0, usaveis, hnr] = get_f0_2(x, Tjan, inds, Fs, range_med)
 
 Njan = round((Tjan/1000)*Fs); % Num. de amostras em cada janela.
 NAv = round((10/1000)*Fs);    % Num. de amostras para o avanço (sobreposição).
@@ -77,7 +77,7 @@ end
 mdn = median(F0);
 
 % Valor em que a mediana pode variar (para mais ou para menos).
-range_med = 15;
+% range_med = 15;
 
 % Obtém os índices em que k0 que não estão distantes da mediana.
 idx_n = find(F0 <= mdn+range_med & F0 >= mdn-range_med);

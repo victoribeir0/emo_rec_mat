@@ -1,4 +1,4 @@
-function [m_nrg, F0, nrg, jit_abs, jit_rel, jit_x, shi_abs, shi_rel, amp_std, mean_dif_picos, hnr] = get_global_contx(x,jans,fs,viz)
+function [m_nrg, F0, nrg, jit_abs, jit_rel, jit_x, shi_abs, shi_rel, amp_std, mean_dif_picos, hnr] = get_global_contx(x,jans,fs)
 
 [~,~,nrg,~,~] = vad_mix(x,40,10);
 

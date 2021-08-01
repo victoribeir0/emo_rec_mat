@@ -1,16 +1,16 @@
 function [centros_gaus] = get_mod(n_quant,viz,plot_img)
 %   triste - raiva - feliz - neutro
 
-folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2';
+folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\wav\treino';
 cd(folder);
-load('emo.mat');
-load('centros64.mat');
+% load('emo.mat');
+% load('centros64.mat');
 
-% emocoes = ['T', 'W', 'F', 'N'];
+emocoes = ['T', 'W', 'F', 'N'];
 
-% for k = 1:4
-%     emo{k} = get_emo_feats(emocoes(k),0,'f0');
-%end
+for k = 1:4
+    emo{k} = get_emo_feats(emocoes(k),0,'f0','treino');
+end
 
 dados = [];
 
@@ -22,7 +22,7 @@ for k = 1:4
     dados = [dados emo{k}];
 end
 
-% [~, centros] = kmeans2(dados,n_quant,0);
+[~, centros] = kmeans2(dados,n_quant,0);
 
 for k = 1:4
     seq{k,:} = get_clusters(emo{k},centros);
