@@ -8,7 +8,7 @@
 function [frr, far, min_erro] = teste_emo(res)
 
 intervalo = 0.1;
-emo_col = ['W';'T';'A';'F';'N']; % Determina as emoções a serem buscadas. ['W';'L';'A';'F';'T';'N'];
+emo_col = ['W';'T';'F';'N']; % Determina as emoções a serem buscadas. ['W';'L';'A';'F';'T';'N'];
 
 % Determina os valores mín. e max. para serem utilizados no cálculo do erro.
 ini = min(res(:)); fim = max(res(:));

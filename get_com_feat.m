@@ -10,7 +10,7 @@ seq = get_clusters(x,centros);
 N_cen = 25;
 
 %if length(seq)-viz > viz+1
-[dx,~,~] = get_com_voz(seq,viz,0,64);
+[dx,P] = get_com_voz(seq,viz,0,64);
 
 vet_dx = reshape((dx),1,64*64);
 vet_dx(1:64+1:length(vet_dx)) = 255;  % ---
@@ -29,24 +29,19 @@ for k = 1:4
     vet(k) = length(find(mat == 199))/N_cen;
 end
 
-%     [l,c] = find(dx == 1);
-%
-%     ll = []; cc = [];
-%
-%     for k = 1:size(cen_g,3)
-%
-%         for i = 1:length(c)
-%             ll = [ll length(find(cen_g(:,1,k) == l(i)))/N_cen]; % quant. de centros que coincidem.
-%             cc = [cc length(find(cen_g(:,2,k) == c(i)))/N_cen];
-%         end
-%
-%         vet(k) = sum(sqrt((ll.^2)+(cc.^2)));
-%         ll = []; cc = [];
-%     end
-%
-%else
-%    dx = 0;
-%    vet = 's';
-%end
+nrg_dx = sum(P(:).^2)/(64*64);
+ent_P = -sum(P(:).*log2(P(:)));
+
+lins = [1:64]'*ones(1,64);
+cols = lins';
+
+aux = (lins-cols).^2;
+contr_dx = sum(aux(:).*P(:))/(64*64);
+homo_dx = sum(P(:)./(1+aux(:)));
+
+vet = [vet nrg_dx ent_P contr_dx homo_dx];
+% cor neg: nrg_gx e ent_P
+% cor pos: nrg_gx e homo_dx
+% cor neg: ent_P e homo_dx
 
 end

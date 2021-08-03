@@ -120,16 +120,16 @@ if ~isempty(idx)
     end
     
     amp_prev = amp_max'+amp_min; % Amplitde pico a pico, max(x)-min(x).
-    mdn = median(amp_prev);      % Mediana para o critério de seleção.
-    amp_prev = amp_prev(amp_prev<mdn+mdn/3 & amp_prev>mdn-mdn/3); % Critério de seleção.
+    %mdn = median(amp_prev);      % Mediana para o critério de seleção.
+    %amp_prev = amp_prev(amp_prev<mdn+mdn/3 & amp_prev>mdn-mdn/3); % Critério de seleção.
     amp_std  = std(amp_prev);    % Desvio pad. das amp. pico a pico da janela.
     
     shim_abs = sum(abs(diff(amp_prev)))/length(amp_prev); % Shim. absoluto.
     shim_rel = 100*(shim_abs/mean(amp_prev));             % Shim. relativo
     
     dif_picos = abs(loc_max-loc_min');
-    mdn = median(dif_picos);
-    dif_picos = dif_picos(dif_picos<mdn+mdn/2 & dif_picos>mdn-mdn/2);
+    % mdn = median(dif_picos);
+    % dif_picos = dif_picos(dif_picos<mdn+mdn/2 & dif_picos>mdn-mdn/2);
     mean_dif_picos = mean(dif_picos);
     
 else

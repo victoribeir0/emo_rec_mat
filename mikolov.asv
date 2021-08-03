@@ -1,0 +1,65 @@
+function w = mikolov(arquivoEntrada, filtro, viz)
+
+% Leitura do arquivo e determinação dos caracteres.
+fileID = fopen(arquivoEntrada);
+format = '%c';
+texto = fscanf(fileID,format);
+car = regexp(texto, '\S', 'match'); % Determina os caracteres.
+car = cell2mat(car);                % Transforma em um vetor.
+C = unique(car);                    % Obtém os caracteres únicos.
+
+if filtro == 1
+    C(regexp(C,'[!,'',",(,),*,-,.,/,_,«,»,À,Á,É,Ó,à,á,â,ã,ç,é,ê,í,ó,ô,õ,ú,ü,–,-,-,:,;,?,`,’,“,”]')) = [];
+    car(regexp(car,'[!,'',",(,),*,-,.,/,_,«,»,À,Á,É,Ó,à,á,â,ã,ç,é,ê,í,ó,ô,õ,ú,ü,–,-,-,:,;,?,`,’,“,”]')) = [];
+end
+
+% Rede neural para obter o espaço semântico v:
+w = rand(length(C),length(C)*viz+1);      % Matriz w da rede neural.
+passo = 0.001;
+custofinal = zeros(1,90000);
+
+% Plota o espaço inicial (aleatório).
+for k = 1:length(C)
+    plot(w(1,k),w(2,k),'b*'); hold on; grid on;
+    text(w(1,k),w(2,k),C(k),'Fontsize',14);
+end
+
+% Iterações da rede neural.
+for i = viz:90000
+    % Entrada do tipo one hot (1 no caractere de interesse).
+    xn = zeros(length(C),1);  
+    
+    x = [];
+    for s = 0:abs(1-viz)
+        xn(find(car(i-s) == C)) = 1;
+        x = [x; xn];
+        xn = zeros(length(C),1);  
+    end
+    
+    x = [1; x];
+    y = 1./(1+exp(-w*x)); % sigmiode
+
+    % y = exp(w*z)/sum(exp(w*z)); % softmax
+      
+    % Estima um caractere a partir do anterior.
+    alvo = zeros(length(C),1); 
+    alvo(find(car(i+1) == C)) = 1;
+    e = alvo-y;    
+    retro = e .* (y.*(1-y)); % Derivada da sigmoide.
+    
+    wnovo = w+passo*(retro*z');    
+    w = wnovo;
+    
+    custofinal(i) = sum(mean(e.^2)); % Calcula o custo.
+    
+end
+
+figure,
+for k = 1:length(C)
+    plot(w(k,1),w(k,2),'b*'); hold on; grid on;
+    text(w(k,1),w(k,2),C(k),'Fontsize',14);
+end
+
+figure, plot(custofinal);
+
+end

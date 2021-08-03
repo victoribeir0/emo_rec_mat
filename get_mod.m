@@ -32,7 +32,7 @@ dx = zeros(n_quant,n_quant,4);
 dxn = zeros(n_quant,n_quant,4);
 
 for k = 1:4
-    [dx(:,:,k),dxn(:,:,k),~] = get_com_voz(seq{k},viz,0,n_quant);
+    [dx(:,:,k),~] = get_com_voz(seq{k},viz,0,n_quant);
 end
 
 N_cen = 100;

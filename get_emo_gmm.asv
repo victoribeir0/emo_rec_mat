@@ -36,11 +36,9 @@ for k = 1:length(emos)
     if strcmp(ext, 'f0')
         y = emo_full_treino{k};
     elseif strcmp(ext, 'mfcc')
-        y = emo_mfcc_treino{k};
-    end
     
     
-    y = y(9:12,:);
+    y = y(13:16,:);
     
     % Determina os parâmetros do GMM para uma emoção.
     [p0n,cn,Sn,Ln] = gmm_em_2(y', K, 10, 0);

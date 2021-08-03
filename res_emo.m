@@ -9,6 +9,16 @@
 
 function res = res_emo(C,p0,cov,rnn,ext)
 
+folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2';
+cd(folder);
+
+if strcmp(ext, 'f0')
+    load('emo_full_teste');
+    
+elseif strcmp(ext, 'mfcc')
+    load('emo_mfcc_teste');
+end
+
 % Localização dos arquivos de áudio.
 cd('C:\Users\victo\Documents\Dataset _ EmoDB2\wav\teste');
 as = dir('*.wav');
@@ -25,7 +35,7 @@ a_coef = [];
 
 % Emoções a serem procuradas.
 % emos = ['W';'L';'A';'F';'T';'N'];
-emos = ['T';'W';'A';'F';'N'];
+emos = ['T';'W';'F';'N'];
 
 % Laço for para cada emoção.
 for emo = 1:length(emos)
@@ -53,32 +63,24 @@ for emo = 1:length(emos)
             
             % Caso o extrator seja mfcc:
             if strcmp(ext, 'mfcc')
-                dMFCC = dmfcc(MFCC,3);
-                MFCC = [MFCC; dMFCC];
+                %dMFCC = dmfcc(MFCC,3);
+                %MFCC = [MFCC; dMFCC];
                 
-                y = MFCC; % Vetor de características mfcc.
+                % y = MFCC; % Vetor de características mfcc.
+                y = emo_mfcc_teste{emo,n};
             end
             
             % Caso o extrator seja f0:
             if strcmp(ext, 'f0')
-                %[~, m_f0, nrg, jit_abs, ~, jit_x, shi_abs, shi_rel, amp_std, amp_x, mean_dif_picos] = get_global(dados.data,idx,dados.fs);
+                % [~, f0, nrg, jit_abs, ~, jit_x, shi_abs, ~, amp_x, mean_dif_picos, ~] = get_global_contx(dados.data,idx,dados.fs,3);
                 %[int_voz, ~] = get_times(nrg,1);
                 
-                % Vetor de características temporais.
-                %y = [sum(int_voz); mean(int_voz); m_f0; mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x)];
+                %y1 = [f0'; jit_abs; shi_abs; mean_dif_picos];
+                %[vet, ~] = get_com_feat(y1,3);
                 
-                [~, f0, nrg, jit_abs, ~, jit_x, shi_abs, ~, amp_x, mean_dif_picos, ~] = get_global_contx(dados.data,idx,dados.fs);
-                [int_voz, ~] = get_times(nrg,1);
-                
-                %y = [sum(int_voz); mean(int_voz); f0; mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x)];
-                y1 = [f0'; jit_abs; shi_abs; mean_dif_picos];
-                [vet, ~] = get_com_feat(y1,5);
-                
-                if vet ~= 's'
-                    y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];
-                else
-                    y = [];
-                end
+                % y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];                                                
+                y = emo_full_teste{emo,n};
+                y = y(9:12);
             end
             
             if strcmp(ext, 'lpcc')
@@ -117,7 +119,7 @@ for emo = 1:length(emos)
                 end
                 
             else
-               res(ni,:) = []; 
+                res(ni,:) = [];
             end
             
             ni = ni+1; % Incrementa a locução.

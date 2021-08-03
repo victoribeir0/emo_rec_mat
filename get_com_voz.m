@@ -1,6 +1,6 @@
 % viz = Vizinhos (2,3,4,5... etc)
 
-function [dx,dxn,C] = get_com_voz(seq,viz,plot_img,n_quant)
+function [dx,P] = get_com_voz(seq,viz,plot_img,n_quant)
 
 % C = unique(x);    % Obtém os caracteres únicos.
 C = 1:n_quant;

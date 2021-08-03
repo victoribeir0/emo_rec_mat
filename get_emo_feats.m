@@ -17,7 +17,7 @@ N = numel(as);
 
 % Inicialização para cada tipo de extrator ('mfcc', 'f0', etc.).
 if strcmp(ext, 'mfcc')
-    base = zeros(36,1);
+    base = [];
     
 elseif strcmp(ext, 'f0')
     base = [];
@@ -25,6 +25,8 @@ elseif strcmp(ext, 'f0')
 elseif strcmp(ext, 'lpcc')
     base = zeros(15,1);
 end
+
+warning('off','signal:findpeaks:largeMinPeakHeight'); % Desativa avisos.
 
 % Laço para cada sinal.
 for n = 1:N
