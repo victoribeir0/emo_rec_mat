@@ -14,3 +14,5 @@
 
 ## Classificadores
 - GMM EM
+
+![alt text](https://github.com/victoribeir0/emo_rec_matlab/blob/main/interface.png?raw=true)
