@@ -1,33 +1,33 @@
 function w2 = bengio(arquivoEntrada, filtro, viz)
 
-% Leitura do arquivo e determinação dos caracteres.
+% Leitura do arquivo e determinaÃ§Ã£o dos caracteres.
 fileID = fopen(arquivoEntrada);
 format = '%c';
 texto = fscanf(fileID,format);
 car = regexp(texto, '\S', 'match'); % Determina os caracteres.
 car = cell2mat(car);                % Transforma em um vetor.
-C = unique(car);                    % Obtém os caracteres únicos.
+C = unique(car);                    % ObtÃ©m os caracteres Ãºnicos.
 
 if filtro == 1
-    C(regexp(C,'[!,'',",(,),*,-,.,/,_,«,»,À,Á,É,Ó,à,á,â,ã,ç,é,ê,í,ó,ô,õ,ú,ü,–,-,-,:,;,?,`,’,“,”]')) = [];
-    car(regexp(car,'[!,'',",(,),*,-,.,/,_,«,»,À,Á,É,Ó,à,á,â,ã,ç,é,ê,í,ó,ô,õ,ú,ü,–,-,-,:,;,?,`,’,“,”]')) = [];
+    C(regexp(C,'[!,'',",(,),*,-,.,/,_,Â«,Â»,Ã€,Ã,Ã‰,Ã“,Ã ,Ã¡,Ã¢,Ã£,Ã§,Ã©,Ãª,Ã­,Ã³,Ã´,Ãµ,Ãº,Ã¼,â€“,-,-,:,;,?,`,â€™,â€œ,â€]')) = [];
+    car(regexp(car,'[!,'',",(,),*,-,.,/,_,Â«,Â»,Ã€,Ã,Ã‰,Ã“,Ã ,Ã¡,Ã¢,Ã£,Ã§,Ã©,Ãª,Ã­,Ã³,Ã´,Ãµ,Ãº,Ã¼,â€“,-,-,:,;,?,`,â€™,â€œ,â€]')) = [];
 end
 
 dim = 2;
 
-% Rede neural para obter o espaço semântico v:
-w1 = rand(dim,length(C)*viz+1); % Inicia o espaço semântico.
+% Rede neural para obter o espaÃ§o semÃ¢ntico v:
+w1 = rand(dim,length(C)*viz+1); % Inicia o espaÃ§o semÃ¢ntico.
 w2 = rand(length(C),dim+1);      % Matriz w da rede neural.
 passo = 0.01;
 custofinal = zeros(1,90000);
 
-% Plota o espaço inicial (aleatório).
+% Plota o espaÃ§o inicial (aleatÃ³rio).
 for k = 1:length(C)
     plot(w1(1,k),w1(2,k),'b*'); hold on; grid on;
     text(w1(1,k),w1(2,k),C(k),'Fontsize',14);
 end
 
-% Iterações da rede neural.
+% IteraÃ§Ãµes da rede neural.
 for i = viz:90000
     % Entrada do tipo one hot (1 no caractere de interesse).
     xn = zeros(length(C),1);  
