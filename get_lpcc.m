@@ -46,7 +46,7 @@ end
 coefs = [1 -a(end,2:end)]; % Obtenção dos coeficientes.
 % Resposta em frequência dos coeficientes.
 % Os coefs são do modelo de produção de voz (all-pole, iir).
-[H,F] = freqz(1,coefs,length(x)/2,Fs);
+[H,F] = freqz(1,coefs,round(length(x)/2),Fs);
 
 if plot_img
     % Tranformada de Fourier do sinal.

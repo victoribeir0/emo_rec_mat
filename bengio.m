@@ -19,7 +19,7 @@ dim = 2;
 w1 = rand(dim,length(C)*viz+1); % Inicia o espaço semântico.
 w2 = rand(length(C),dim+1);      % Matriz w da rede neural.
 passo = 0.01;
-custofinal = zeros(1,90000);
+custofinal = zeros(1,100000);
 
 % Plota o espaço inicial (aleatório).
 for k = 1:length(C)
@@ -28,7 +28,7 @@ for k = 1:length(C)
 end
 
 % Iterações da rede neural.
-for i = viz:90000
+for i = viz:100000
     % Entrada do tipo one hot (1 no caractere de interesse).
     xn = zeros(length(C),1);  
     

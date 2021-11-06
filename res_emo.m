@@ -7,20 +7,28 @@
     res = Matriz de resultados.
 %}
 
-function res = res_emo(C,p0,cov,rnn,ext)
+function res = res_emo(C,p0,cov,rnn,ext,dims)
 
-folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2';
+folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\dados\dados_75_25';
 cd(folder);
 
-if strcmp(ext, 'f0')
-    load('emo_full_teste');
-    
+if strcmp(ext, 'pro_jan')
+    load('emo_pro_jan_teste');
+    load('centros_pro_jan_64.mat');
+    %load('mds_pro_16432');
+    %load('mds_pro_16433');
+    %load('mds_pro_16452');
+    load('mds_pro_16453');
+
 elseif strcmp(ext, 'mfcc')
     load('emo_mfcc_teste');
+    
+elseif strcmp(ext, 'lfpc-coef')
+    load('emo_lfpc_teste');       
 end
 
 % Localização dos arquivos de áudio.
-cd('C:\Users\victo\Documents\Dataset _ EmoDB2\wav\teste');
+cd('C:\Users\victo\Documents\Dataset _ EmoDB2\wav\emos\Teste');
 as = dir('*.wav');
 N  = numel(as);
 
@@ -33,15 +41,16 @@ ni = 1;
 Sf = [];
 a_coef = [];
 
+warning('off','signal:findpeaks:largeMinPeakHeight'); % Desativa avisos.
+
 % Emoções a serem procuradas.
-% emos = ['W';'L';'A';'F';'T';'N'];
-emos = ['T';'W';'F';'N'];
+emos = ['F','A','N','T','E','L','W'];
 
 % Laço for para cada emoção.
 for emo = 1:length(emos)
     
     % Localização dos arquivos de áudio.
-    folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\wav\teste';
+    folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\wav\emos\Teste';
     cd(folder);
     as = dir('*.wav');
     N = numel(as);
@@ -56,7 +65,7 @@ for emo = 1:length(emos)
         if emos(emo) == em
             
             % Abre o arquivo de áudio e processa o áudio.
-            folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\wav\teste';
+            folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2\wav\emos\Teste';
             cd(folder);
             dados = importdata(str);
             [MFCC,idx] = process(dados,rnn);
@@ -71,42 +80,49 @@ for emo = 1:length(emos)
             end
             
             % Caso o extrator seja f0:
-            if strcmp(ext, 'f0')
-                % [~, f0, nrg, jit_abs, ~, jit_x, shi_abs, ~, amp_x, mean_dif_picos, ~] = get_global_contx(dados.data,idx,dados.fs,3);
-                %[int_voz, ~] = get_times(nrg,1);
-                
-                %y1 = [f0'; jit_abs; shi_abs; mean_dif_picos];
-                %[vet, ~] = get_com_feat(y1,3);
-                
-                % y = [sum(int_voz); mean(int_voz); mean(f0); mean(jit_abs); jit_x; mean(shi_abs); mean(mean_dif_picos); mean(amp_x); vet'];                                                
-                y = emo_full_teste{emo,n};
-                y = y(9:12);
+            if (strcmp(ext, 'pro_jan') || strcmp(ext, 'pro_aud'))
+                %y = ext_prosodia(dados, idx, ext);
+                %emo_pro_jan_teste{emo,n} = y;
+                y = emo_pro_jan_teste{emo,n};
+                seq = get_clusters(y,centros);               
+                y = [y; y_3(seq,dims)'];
             end
             
-            if strcmp(ext, 'lpcc')
+            if strcmp(ext, 'lfpc-env') || strcmp(ext, 'lpcc-coef')
                 % Mat. LPCC e mat. da resp. em freq para cada janela analisada.
+                formantes = get_formantes(dados.data,12,dados.fs);
                 [mat_lpcc, mat_H] = get_lpcc_mat(dados.data, dados.fs, 40, 10, rnn, 12);
+                mat_H = abs(mat_H);
                 
-                % Matrizes somente com as janelas com voz (idx).
-                mat_H = log(abs(mat_H(:,idx)));
-                mat_lpcc = mat_lpcc(:,idx);
-                
-                % Bandas do espectro (0-1000, 1000-2000, 2000-3000).
-                y1 = round(re_scale(1000,(0:8000),(1:size(mat_H,1))));
-                y2 = round(re_scale(2000,(0:8000),(1:size(mat_H,1))));
-                y3 = round(re_scale(3000,(0:8000),(1:size(mat_H,1))));
-                
-                % Energias para cada banda do espectro.
-                c1 = sum(mat_H(1:y1,:).^2);
-                c2 = sum(mat_H(y1:y2,:).^2);
-                c3 = sum(mat_H(y2:y3,:).^2);
-                
-                % Energia logarítmica para cada banda.
-                en_log = log([c1;c2;c3]);
-                
-                % mean_mat_H = mean(mat_H(:,:),2);
-                
-                y = [mat_lpcc; en_log]; % Vetor de características lpcc.
+                if strcmp(ext, 'lfpc-env')
+%                     mat_H = log(mat_H(:,:));
+%                     lpcc_lfpc = get_lfpc(mat_H, size(mat_H,1)*2, dados.fs, 12);
+%                     dlpcc_lfpc = dmfcc(lpcc_lfpc,3);
+%                     y = [lpcc_lfpc; dlpcc_lfpc]; % Vetor de características lpcc.
+                    y = emo_lfpc_env_teste{emo,n};
+                    
+                elseif strcmp(ext, 'lpcc-coef')
+                    %y = mat_lpcc; % Vetor de características lpcc.
+                    y = emo_lpcc_teste{emo,n};
+                end                
+
+            end
+            
+            if strcmp(ext, 'lfpc-coef')
+                %[S, L] = get_spec(dados.data, dados.fs, 40, 10, 0, 0);
+                %LFPC = get_lfpc(S, L, dados.fs,12);
+                %dLFPC = dmfcc(LFPC,3);
+                %y = [LFPC; dLFPC];
+                y = emo_lfpc_teste{emo,n};
+
+            end
+            
+            if strcmp(ext, 'linfpc')
+                %[S, L] = get_spec(dados.data, dados.fs, 40, 10, 0, 0);
+                %LFPC = get_linfpc(S, 12);
+                %dLFPC = dmfcc(LFPC,3);
+                %y = [LFPC; dLFPC];
+                y = emo_linfpc_12_teste{emo,n};
             end
             
             if ~isempty(y)
@@ -165,4 +181,23 @@ else % Caso rnn  seja solicitado.
     idx = 1:size(MFCC,2); % Nesse caso, todos os índices sao uteis.
 end
 
+end
+
+function y = ext_prosodia(dados, idx, ext)
+[~, f0, nrg, lognrg, jit_abs, ~, ~, shi_abs, ~, ~, mean_dif_picos] = get_global_contx(dados.data,idx,dados.fs,3);
+[int_voz, ~] = get_times(nrg,1);            
+y1 = [f0'; jit_abs; shi_abs; mean_dif_picos; lognrg];
+
+if strcmp(ext, 'pro_aud')     % Características por áudios.
+    % [vet, ~] = get_com_feat(y1,3);
+    y = [sum(int_voz); mean(f0); mean(jit_abs); mean(shi_abs); mean(mean_dif_picos)];
+
+elseif strcmp(ext, 'pro_jan') % Características por janelas. 
+    y = y1;
+    
+elseif strcmp(ext, 'all') % Características por janelas.     
+    dy1 = dmfcc(y1,3);    % Primeira a segunda derivada.
+    dy2 = dmfcc(dy1,3);    
+    y = [y1; dy1; dy2];    
+end  
 end

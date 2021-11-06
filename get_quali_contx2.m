@@ -11,7 +11,7 @@
     amp_x = Amplitudes dos períodos para todo o sinal.
 %}
 
-function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, mean_dif_picos, idx_nan] = get_quali_contx(x, Tjan, inds, Fs, F0)
+function [jit_abs, jit_rel, jit_sinal, shim_abs, shim_rel, amp_std, mean_dif_picos, idx_nan] = get_quali_contx2(x, Tjan, inds, Fs, F0)
 
 Njan = round((Tjan/1000)*Fs);      % Num. de amostras em cada janela.
 NAv  = round((10/1000)*Fs);        % Num. de amostras para o avanço (sobreposição).
@@ -22,24 +22,38 @@ amp_std  = zeros(1,length(inds)); mean_dif_picos = zeros(1,length(inds));
 T0 = Fs./F0;
 t = 2;
 
+x = x-mean(x);
+
+% Filtro FIR passa-baixas, fc = 500 Hz, ordem = 200.
+h = fir1(200,(500*2)/Fs);  % Coeficientes
+filt = conv(x,h);          % Sinal filtrado.
+filt = filt(101:end-100);
+
+% Filtro FIR passa-altas, fc = 100 Hz, ordem = 200.
+h = fir1(200, (50*2)/Fs, 'high');
+filt = conv(filt,h);
+filt = filt(101:end-100);
+
+mat_x = buffer(filt, Njan, Njan-NAv, 'nodelay');
+
 for i = 1:length(inds)-2  % Laço for para cada janela específica.
     
-    aux = inds(i);  % Define a janela específica.
-    ap = ((aux-1)*NAv)+1;
-    a = x(ap:ap+Njan-1);
-    a = a-mean(a);  % Remove o nível DC subtraindo pela média.
-    
-    % Filtro FIR passa-baixas, fc = 500 Hz, ordem = 200.
-    h = fir1(200,(500*2)/Fs);  % Coeficientes
-    filt = conv(a,h);          % Sinal filtrado.
-    h = fir1(200, (100*2)/Fs, 'high');
-    filt = conv(filt,h);
-    mn = min(filt)*0.5; mx = max(filt)*0.5;  % Limites para detecção dos picos.
+    aux = inds(i);  % Define a janela específica.    
+    a = mat_x(:,aux);   
+    %a = a-mean(a);  % Remove o nível DC subtraindo pela média.        
+    mx = max(a)*0.5;  % Limites para detecção dos picos.
     
     jit_abs(i) = sum(abs(diff(T0(i:i+t))))/length(T0(i:i+t));
     jit_rel(i) = 100*(jit_abs(i)/mean(T0(i:i+t)));
     
-    [shim_abs(i), shim_rel(i), ~, amp_std(i), mean_dif_picos(i)] = get_shimmer(filt, mean(F0), Fs, mx);
+    [shim_abs(i), shim_rel(i), ~, amp_std(i), mean_dif_picos(i)] = get_shimmer(a, mean(F0), Fs, mx);
+    
+    % Caso o shimmer dê zero, faz a média entre os dois anteriores.
+    if shim_abs(i) == 0 && i >= 2
+        shim_abs(i) = shim_abs(i-1);
+        shim_rel(i) = shim_rel(i-1);
+        amp_std(i) = amp_std(i-1);
+    end
     
 end
 
@@ -68,7 +82,9 @@ end
 %}
 function [shim_abs, shim_rel, amp_prev, amp_std, mean_dif_picos] = get_shimmer(x, mean_F0, Fs, mx)
 
-[amp_max, loc_max] = findpeaks(x,'MinPeakHeight',mx);
+x = [zeros(200,1); x; zeros(200,1)]; % Padding do sinal (evita problemas ...).
+% Determina os máximos, com um valor mínimo e com uma distância mínima (méd. F0 + 15).
+[amp_max, loc_max] = findpeaks(x,'MinPeakHeight',mx, 'MinPeakDistance',Fs/(mean_F0+15)); 
 idx = ones(length(amp_max),1);
 
 if ~isempty(idx)
@@ -101,23 +117,25 @@ if ~isempty(idx)
     loc_min = zeros(1,length(loc_max));
     amp_min = zeros(1,length(loc_max));
     
-    for n = 1:length(loc_max)                        
-        ini = loc_max(n)-T; fim = loc_max(n)+T;                                
-        sinal_cut = [x(ini:loc_max(n)-1)' x(loc_max(n):fim)'];
-        mx_rel = max(-sinal_cut)*0.5;
-        [amp_min_prev, loc_min_prev] = findpeaks(-sinal_cut,'MinPeakHeight',mx_rel);
-        
-        if isempty(amp_min_prev)
-            amp_min(n) = 0;
-            loc_min(n) = 0;
-        else
-            amp_min(n) = max(amp_min_prev);
-            loc_min(n) = max(loc_min_prev);
-        end
-        
-        % loc_min_prev = max(loc_min_prev);
-        loc_min(n) = re_scale(loc_min(n),(1:size(sinal_cut,2)),(ini:fim));                
-        
+    for n = 1:length(loc_max)
+        ini = loc_max(n)-T; fim = loc_max(n)+T;
+        %if ini >= 1 && fim <= length(x)
+            
+            sinal_cut = [x(ini:loc_max(n)-1)' x(loc_max(n):fim)'];
+            mx_rel = max(-sinal_cut)*0.5;
+            [amp_min_prev, loc_min_prev] = findpeaks(-sinal_cut,'MinPeakHeight',mx_rel);
+            
+            if isempty(amp_min_prev)
+                amp_min(n) = 0;
+                loc_min(n) = 0;
+            else
+                amp_min(n) = max(amp_min_prev);
+                loc_min(n) = max(loc_min_prev);
+            end
+            
+            % loc_min_prev = max(loc_min_prev);
+            loc_min(n) = re_scale(loc_min(n),(1:size(sinal_cut,2)),(ini:fim));
+        %end
     end
     
     amp_prev = amp_max'+amp_min; % Amplitde pico a pico, max(x)-min(x).
@@ -128,7 +146,7 @@ if ~isempty(idx)
     shim_abs = sum(abs(diff(amp_prev)))/length(amp_prev); % Shim. absoluto.
     shim_rel = 100*(shim_abs/mean(amp_prev));             % Shim. relativo
     
-    dif_picos = abs(loc_max-loc_min');
+    dif_picos = abs(loc_max-loc_min'); % Lagrura dos 'picos'.
     % mdn = median(dif_picos);
     % dif_picos = dif_picos(dif_picos<mdn+mdn/2 & dif_picos>mdn-mdn/2);
     mean_dif_picos = mean(dif_picos);

@@ -3,8 +3,8 @@ function [centros_gaus,dx] = get_mod(n_quant,viz)
 
 folder = 'C:\Users\victo\Documents\Dataset _ EmoDB2';
 cd(folder);
-load('emo_full.mat');
-load('centros64.mat');
+load('emo_full_treino.mat');
+% load('centros64.mat');
 
 % emocoes = ['T', 'W', 'F', 'N'];
 
@@ -12,20 +12,20 @@ load('centros64.mat');
 %    emo{k} = get_emo_feats(emocoes(k),0,'f0','treino');
 %end
 
-%dados = [];
+dados = [];
 
-%emo{1} = emo{1}(:,1:784);
-%emo{2} = emo{2}(:,1:784);
-%emo{4} = emo{4}(:,1:784);
+% emo{1} = emo{1}(:,1:784);
+% emo{2} = emo{2}(:,1:784);
+% emo{4} = emo{4}(:,1:784);
 
-%for k = 1:4
-    %dados = [dados emo{k}];
-%end
+for k = 1:7
+    dados = [dados emo_pro_jan_treino{k}];
+end
 
-% [~, centros] = kmeans2(dados,n_quant,0);
+[~, centros] = kmeans2(dados,n_quant,0);
 
-for k = 1:4
-    seq{k,:} = get_clusters(emo{k},centros);
+for k = 1:7
+    seq{k,:} = get_clusters(emo_pro_jan_treino{k},centros);
 end
 
 dx = zeros(n_quant,n_quant,4);

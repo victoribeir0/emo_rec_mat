@@ -29,17 +29,17 @@ for k = 1:4
     vet(k) = length(find(mat == 199))/N_cen;
 end
 
-nrg_dx = sum(P(:).^2)/(64*64);
-ent_P = -sum(P(:).*log2(P(:)));
+% nrg_dx = sum(P(:).^2)/(64*64);
+% ent_P = -sum(P(:).*log2(P(:)));
+% 
+% lins = [1:64]'*ones(1,64);
+% cols = lins';
+% 
+% aux = (lins-cols).^2;
+% contr_dx = sum(aux(:).*P(:))/(64*64);
+% homo_dx = sum(P(:)./(1+aux(:)));
 
-lins = [1:64]'*ones(1,64);
-cols = lins';
-
-aux = (lins-cols).^2;
-contr_dx = sum(aux(:).*P(:))/(64*64);
-homo_dx = sum(P(:)./(1+aux(:)));
-
-vet = [vet nrg_dx ent_P contr_dx homo_dx];
+% vet = [vet];
 % cor neg: nrg_gx e ent_P
 % cor pos: nrg_gx e homo_dx
 % cor neg: ent_P e homo_dx

@@ -1,8 +1,8 @@
 % viz = Vizinhos (2,3,4,5... etc)
 
-function [dx,P] = get_com_voz(seq,viz,plot_img,n_quant,vizinhanca)
+function [dx,P] = get_dist_text(seq,viz,plot_img,vizinhanca, dist)
 
-C = 1:n_quant;
+C = unique(seq);
 N = length(C);    % Tamanho do conjunto de caracteres.
 P = ones(N,N);    % Inicia a matriz de co-ocorrências.
 
@@ -43,7 +43,12 @@ end
 P = P/sum(P(:)); % Normaliza a matriz de probabilidades.
 % P = P./repmat(sum(P,2),1,32);
 
-dx = -log(P);    % Caucula o log.
+if dist == 1
+    dx = -log(P);    % Caucula o log.
+else
+    dx = P;
+end
+
 %dx = -P;
 mat_x = normalizar(dx);
 % Digonal principal igual a 0.
@@ -54,7 +59,7 @@ dxn = dx;
 dxn(dxn >= 128) = 255;
 
 if plot_img
-    imagesc(dx); figure, imagesc(dxn); % Mostra a imagem.
+    imagesc(dx); % figure, imagesc(dxn); % Mostra a imagem.
 end
 
 end
